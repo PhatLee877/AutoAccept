@@ -1,26 +1,12 @@
+-- Auto click Gift_Notification Accept with pet filter rules
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local petRules = {
-    {
-        keyword = {"Mimic", " Butterfly", "T-rex", " Spinosaurus", "French", "Lobster", " Raccoon", "Kitsune", "Fennec", "Disco", "Queen", " Dragonfly"},
-        minKg = nil,
-        maxAge = nil
-    }
-}
-
+-- Hàm kiểm tra pet có đạt yêu cầu không
 local function shouldAcceptPet(petName, kg, age)
     for _, rule in ipairs(petRules) do
         if string.find(string.lower(petName), string.lower(rule.keyword)) then
-            local kgOk = (not rule.minKg) or (kg and kg >= rule.minKg)
-            if not kgOk then return false end
-
-            local ageOk = true
-            if rule.maxAge and age then
-                ageOk = age < rule.maxAge
-            end
-
-            if ageOk then
+            if (not rule.minKg or kg >= rule.minKg) and (not rule.maxAge or age < rule.maxAge) then
                 return true
             end
         end
@@ -33,35 +19,18 @@ while task.wait(0.1) do
     if giftUI then
         local petLabel = giftUI:FindFirstChildWhichIsA("TextLabel", true)
         if petLabel and petLabel.Text then
-            local petName, kg, age
+            -- Ví dụ text: "Capybara [13.92 KG] [Age 87]"
+            local petName, kgStr, ageStr = string.match(petLabel.Text, "^(.-) %[(.-) KG%] %[Age (.-)%]$")
+            local kg = tonumber(kgStr)
+            local age = tonumber(ageStr)
 
-            -- Thử tách tên, kg, tuổi nếu có
-            local matchName, kgStr, ageStr = string.match(petLabel.Text, "^(.-)%s*%[([%d%.]+)%s*KG%]%s*%[Age%s*([%d%.]+)%]$")
-            if matchName then
-                petName = matchName
-                kg = tonumber(kgStr)
-                age = tonumber(ageStr)
-            else
-                -- Trường hợp chỉ có tên + kg
-                local matchName2, kgStr2 = string.match(petLabel.Text, "^(.-)%s*%[([%d%.]+)%s*KG%]$")
-                if matchName2 then
-                    petName = matchName2
-                    kg = tonumber(kgStr2)
-                else
-                    -- Chỉ có tên
-                    petName = petLabel.Text
-                end
-            end
-
-            -- Kiểm tra điều kiện
-            if shouldAcceptPet(petName, kg, age) then
+            if petName and kg and age and shouldAcceptPet(petName, kg, age) then
                 local acceptBtn = giftUI:FindFirstChild("Accept", true)
                 if acceptBtn and acceptBtn.Visible and acceptBtn.Active then
                     firesignal(acceptBtn.MouseButton1Click)
-                    print("[AutoAccept] Accepted:", petName, kg and (kg.."KG") or "", age and ("Age "..age) or "")
+                    print("[AutoAccept] Accepted:", petName, kg.."KG", "Age "..age)
                 end
-            else
-                print("[AutoAccept] Rejected:", petName, kg and (kg.."KG") or "", age and ("Age "..age) or "")
+            end
         end
     end
 end

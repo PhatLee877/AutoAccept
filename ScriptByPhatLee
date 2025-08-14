@@ -6,6 +6,19 @@ local playerGui = player:WaitForChild("PlayerGui")
 local function shouldAcceptPet(petName, kg, age)
     local lowerName = string.lower(petName)
 
+local petRules = {
+    {
+        keyword = {"Mimic", " Butterfly", "T-rex", " Spinosaurus", "French", "Lobster", " Raccoon", "Kitsune", "Fennec", "Disco", "Queen", " Dragonfly"},
+        minKg = nil,
+        maxAge = nil
+    },
+    {
+        keyword = "Capybara",
+        minKg = 13,
+        maxAge = 100
+    }
+}
+
     for _, rule in ipairs(petRules) do
         local keywords = rule.keyword
         if type(keywords) ~= "table" then

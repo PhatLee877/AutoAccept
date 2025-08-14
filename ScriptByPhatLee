@@ -1,19 +1,6 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local petRules = {
-    {
-        keyword = "Mimic",
-        minKg = nil
-        maxAge = nil
-    },
-    {
-        keyword = "Capybara", 
-        minKg = 7,
-        maxAge = 100
-    }
-}
-
 local function shouldAcceptPet(petName, kg, age)
     for _, rule in ipairs(petRules) do
         if string.find(string.lower(petName), string.lower(rule.keyword)) then

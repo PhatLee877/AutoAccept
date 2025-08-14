@@ -62,7 +62,6 @@ while task.wait(0.1) do
                 end
             else
                 print("[AutoAccept] Rejected:", petName, kg and (kg.."KG") or "", age and ("Age "..age) or "")
-            end
         end
     end
 end

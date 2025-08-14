@@ -1,13 +1,10 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Load rule từ file local
-local rules = loadfile("rules.lua")()
-
 local function getPetInfo(ui)
     local name = ui:FindFirstChild("PetName", true) and ui.PetName.Text or ""
     local kg = ui:FindFirstChild("PetKg", true) and tonumber(ui.PetKg.Text:match("%d+")) or nil
-    local age = ui:FindFirstChild("PetAge", true) and tonumber(ui:FindFirstChild("PetAge", true).Text:match("%d+")) or nil
+    local age = ui:FindFirstChild("PetAge", true) and tonumber(ui.PetAge.Text:match("%d+")) or nil
     return name, kg, age
 end
 

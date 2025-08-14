@@ -1,27 +1,72 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local function getPetInfo(ui)
-    local name = ui:FindFirstChild("PetName", true) and ui.PetName.Text or ""
-    local kg = ui:FindFirstChild("PetKg", true) and tonumber(ui.PetKg.Text:match("%d+")) or nil
-    local age = ui:FindFirstChild("PetAge", true) and tonumber(ui.PetAge.Text:match("%d+")) or nil
-    return name, kg, age
+local petRules = {
+    {
+        keyword = "Mimic",
+        minKg = nil
+        maxAge = nil
+    },
+    {
+        keyword = "Capybara", 
+        minKg = 7,
+        maxAge = 100
+    }
+}
+
+local function shouldAcceptPet(petName, kg, age)
+    for _, rule in ipairs(petRules) do
+        if string.find(string.lower(petName), string.lower(rule.keyword)) then
+            local kgOk = (not rule.minKg) or (kg and kg >= rule.minKg)
+            if not kgOk then return false end
+
+            local ageOk = true
+            if rule.maxAge and age then
+                ageOk = age < rule.maxAge
+            end
+
+            if ageOk then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 while task.wait(0.1) do
     local giftUI = playerGui:FindFirstChild("Gift_Notification", true)
     if giftUI then
-        local acceptBtn = giftUI:FindFirstChild("Accept", true)
-        if acceptBtn and acceptBtn.Visible and acceptBtn.Active then
-            local name, kg, age = getPetInfo(giftUI)
-            for keyword, rule in pairs(rules) do
-                if name:lower():find(keyword:lower()) then
-                    local kgOK = rule.ignoreKg or (kg and kg >= (rule.minKg or 0))
-                    local ageOK = rule.ignoreAge or (not age or (age <= (rule.maxAge or math.huge)))
-                    if kgOK and ageOK then
-                        firesignal(acceptBtn.MouseButton1Click)
-                    end
+        local petLabel = giftUI:FindFirstChildWhichIsA("TextLabel", true)
+        if petLabel and petLabel.Text then
+            local petName, kg, age
+
+            -- Thử tách tên, kg, tuổi nếu có
+            local matchName, kgStr, ageStr = string.match(petLabel.Text, "^(.-)%s*%[([%d%.]+)%s*KG%]%s*%[Age%s*([%d%.]+)%]$")
+            if matchName then
+                petName = matchName
+                kg = tonumber(kgStr)
+                age = tonumber(ageStr)
+            else
+                -- Trường hợp chỉ có tên + kg
+                local matchName2, kgStr2 = string.match(petLabel.Text, "^(.-)%s*%[([%d%.]+)%s*KG%]$")
+                if matchName2 then
+                    petName = matchName2
+                    kg = tonumber(kgStr2)
+                else
+                    -- Chỉ có tên
+                    petName = petLabel.Text
                 end
+            end
+
+            -- Kiểm tra điều kiện
+            if shouldAcceptPet(petName, kg, age) then
+                local acceptBtn = giftUI:FindFirstChild("Accept", true)
+                if acceptBtn and acceptBtn.Visible and acceptBtn.Active then
+                    firesignal(acceptBtn.MouseButton1Click)
+                    print("[AutoAccept] Accepted:", petName, kg and (kg.."KG") or "", age and ("Age "..age) or "")
+                end
+            else
+                print("[AutoAccept] Rejected:", petName, kg and (kg.."KG") or "", age and ("Age "..age) or "")
             end
         end
     end

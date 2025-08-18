@@ -1,23 +1,44 @@
--- Auto click Gift_Notification Accept with pet filter rules
+-- Auto click Gift_Notification Accept with pet filter rules (BaseWeight)
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+local x = 11.28 -- hằng số tính base weight
+
+-- Hàm tính BaseWeight
+local function calcBaseWeight(kg, age)
+    if not age or age <= 1 then
+        return kg
+    end
+    return kg / (1 + (age - 1) / x)
+end
 
 -- Hàm kiểm tra pet có đạt yêu cầu không
 local function shouldAcceptPet(petName, kg, age)
     local lowerName = string.lower(petName)
 
-local petRules = {
-    {
-        keyword = {"Mimic", " Butterfly", "T-rex", " Spinosaurus", "French", "Lobster", " Raccoon", "Kitsune", "Fennec", "Disco", "Queen", " Dragonfly"},
-        minKg = nil,
-        maxAge = nil
-    },
-    {
-        keyword = "Capybara",
-        minKg = 13,
-        maxAge = 100
+    -- Quy tắc cho các pet (chỉ cần minBaseWeight)
+    local petRules = {
+        -- Rule 1: Pet đặc biệt (không cần BaseWeight)
+        {
+            keyword = {"Mimic", "Butterfly", "T-rex", "Spinosaurus", "French", "Lobster", "Raccoon", "Kitsune", "Fennec", "Disco", "Queen", "Dragonfly"},
+            minBaseWeight = nil
+        },
+        -- Rule 2: Pet Capybara với BaseWeight ≥ 6
+        {
+            keyword = "Capybara",
+            minBaseWeight = 6
+        },
+        -- Rule 3: Pet với BaseWeight ≥ 4 (tùy chỉnh theo yêu cầu)
+        {
+            keyword = "PetType4",
+            minBaseWeight = 4
+        },
+        -- Rule 4: Nhận tất cả pet có BaseWeight >= 6
+        {
+            keyword = "*", -- Áp dụng cho tất cả các pet
+            minBaseWeight = 6
+        }
     }
-}
 
     for _, rule in ipairs(petRules) do
         local keywords = rule.keyword
@@ -26,11 +47,12 @@ local petRules = {
         end
 
         for _, name in ipairs(keywords) do
-            if string.find(lowerName, string.lower(name)) then
-                -- Nếu pet không có age (nil) thì bỏ qua điều kiện maxAge
-                local passAge = (not rule.maxAge or not age or age < rule.maxAge)
-                if (not rule.minKg or kg >= rule.minKg) and passAge then
-                    return true
+            if string.find(lowerName, string.lower(name)) or name == "*" then
+                -- Tính BaseWeight từ kg và age
+                local baseWeight = calcBaseWeight(kg, age)
+                -- Kiểm tra minBaseWeight
+                if not rule.minBaseWeight or baseWeight >= rule.minBaseWeight then
+                    return true, rule.minBaseWeight
                 end
             end
         end
@@ -44,21 +66,29 @@ while task.wait(0.1) do
     if giftUI then
         local petLabel = giftUI:FindFirstChildWhichIsA("TextLabel", true)
         if petLabel and petLabel.Text then
-            -- Thử bắt cả trường hợp có hoặc không có age
             local petName, kgStr, ageStr = string.match(petLabel.Text, "^(.-) %[(.-) KG%] %[Age (.-)%]$")
             if not petName then
-                -- Nếu không có age thì chỉ lấy tên + kg
                 petName, kgStr = string.match(petLabel.Text, "^(.-) %[(.-) KG%]$")
             end
 
             local kg = tonumber(kgStr)
             local age = tonumber(ageStr) -- nếu không có ageStr thì sẽ là nil
 
-            if petName and kg and shouldAcceptPet(petName, kg, age) then
-                local acceptBtn = giftUI:FindFirstChild("Accept", true)
-                if acceptBtn and acceptBtn.Visible and acceptBtn.Active then
-                    firesignal(acceptBtn.MouseButton1Click)
-                    print(string.format("[AutoAccept] Accepted: %s [%.2f KG] %s", petName, kg, age and ("[Age " .. age .. "]") or "[No Age]"))
+            if petName and kg then
+                local ok, rule = shouldAcceptPet(petName, kg, age)
+                if ok then
+                    local acceptBtn = giftUI:FindFirstChild("Accept", true)
+                    if acceptBtn and acceptBtn.Visible and acceptBtn.Active then
+                        firesignal(acceptBtn.MouseButton1Click)
+                        print(string.format(
+                            "[AutoAccept] %s Accepted via minBaseWeight=%s: %s [%.2f KG] %s",
+                            os.date("%H:%M:%S"),
+                            rule,
+                            petName,
+                            kg,
+                            age and ("[Age " .. age .. "] BW=" .. string.format("%.2f", calcBaseWeight(kg, age))) or "[No Age]"
+                        ))
+                    end
                 end
             end
         end

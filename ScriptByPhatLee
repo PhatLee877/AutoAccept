@@ -18,22 +18,10 @@ local function shouldAcceptPet(petName, kg, age)
 
     -- Quy tắc cho các pet (chỉ cần minBaseWeight)
     local petRules = {
-        -- Rule 1: Pet đặc biệt (không cần BaseWeight)
         {
             keyword = {"Mimic", "Butterfly", "T-rex", "Spinosaurus", "French", "Lobster", "Raccoon", "Kitsune", "Fennec", "Disco", "Queen", "Dragonfly"},
             minBaseWeight = nil
         },
-        -- Rule 2: Pet Capybara với BaseWeight ≥ 6
-        {
-            keyword = "Capybara",
-            minBaseWeight = 6
-        },
-        -- Rule 3: Pet với BaseWeight ≥ 4 (tùy chỉnh theo yêu cầu)
-        {
-            keyword = "PetType4",
-            minBaseWeight = 4
-        },
-        -- Rule 4: Nhận tất cả pet có BaseWeight >= 6
         {
             keyword = "*", -- Áp dụng cho tất cả các pet
             minBaseWeight = 6

@@ -1,4 +1,4 @@
-while task.wait(0.1) do
+while task.wait(1.5) do
     local player = game.Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
 
